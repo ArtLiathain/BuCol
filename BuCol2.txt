@@ -4,7 +4,7 @@ XXXX Y
 XXXX Z.
 
 BODY.
-PRINT "Please enter a" number? ".
+PRINT "Please enter a number? ".
 INPUT Y.
 
 MOVE 15 TO Z.

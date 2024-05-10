@@ -97,9 +97,8 @@ declarations : declaration declarations
     |
      
 
-declaration:  VARALLOCATION IDENTIFIER lineEnd {   
-    addSymbol($2, $1);
-}
+declaration:  VARALLOCATION IDENTIFIER lineEnd {addSymbol($2, $1);}
+    | IDENTIFIER lineEnd {yyerrorToCall("Identifier with no capacity declared");}
 
 maincontent : operations lineEnd maincontent 
     | operations lineEnd 
