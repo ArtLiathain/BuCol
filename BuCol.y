@@ -36,6 +36,12 @@ void addSymbol(char* identifier, int maxLen) {
         yyerror(errorMessage);
         return;
     }
+    for (int i = 1; i < strlen(identifier)-1; i++){
+        if (identifier[i-1] == 'X' && identifier[i] == 'X'){
+            yyerror("Cannot have contigious X in variable declaration\n");
+            return;
+        }
+    }
     strcpy(symbolTable[symbolCount].identifier, identifier);
     symbolTable[symbolCount].value = 0;
     symbolTable[symbolCount].maxLen = maxLen;
@@ -76,54 +82,89 @@ int updateSymbolValue(char* identifier, int value) {
     int intValue;
     char* strValue;
 }
-%token <intValue> VARALLOCATION
+%token <intValue> VARALLOCATION INPUT NUMBER
 %token <strValue> IDENTIFIER
-%token <intValue> NUMBER
-%token <intValue> INPUT
 %type <intValue> value
-%type <strValue> validIdentifier
-%type <strValue> errorOperation
-%token BEGINING
-%token NEWLINE
-%token BODY
-%token ADD
-%token MOVE
-%token TO
-%token END
-%token PRINT
-%token SEMICOLON
-%token WORD
+%type <strValue> validIdentifier errorOperation
+%token BEGINING NEWLINE BODY ADD MOVE TO END PRINT SEMICOLON WORD
 %%
-file: BEGINING lineEnd declarations maincontent 
-lineEnd: NEWLINE | {yyerror("Line end missing");}
-declarations : declaration declarations | declaration body | body
-body: BODY lineEnd | BODY {yyerror("BODY not declared");} | lineEnd {yyerror("BODY not declared");} | {yyerror("BODY not declared");}
-declaration:  VARALLOCATION IDENTIFIER lineEnd {
-    for (int i = 1; i < strlen($2)-1; i++){
-        if ($2[i-1] == 'X' && $2[i] == 'X'){
-            yyerror("Cannot have contigious X in variable declaration\n");
-            return;
-        }
-    }
+
+file: BEGINING lineEnd declarations BODY lineEnd maincontent END lineEnd
+lineEnd: NEWLINE 
+    | {yyerror("Line end missing on line above");}
+declarations : declaration declarations 
+    | declaration
+    |
+    ; 
+
+
+declaration:  VARALLOCATION IDENTIFIER lineEnd {   
     addSymbol($2, $1);
 }
-maincontent : operations lineEnd maincontent | operations lineEnd END lineEnd | END lineEnd
-operations : addition | move | input | print | errorOperation {
+
+maincontent : operations lineEnd maincontent 
+    | operations lineEnd 
+    | 
+
+operations : addition 
+    | move 
+    | input 
+    | print 
+    | errorOperation {
     char * errorMessage[100];
     int temp = snprintf(errorMessage, 100, "Operation %s not correctly declared", $1) ;
     yyerror(errorMessage);}
-errorOperation: addErrors {$$="ADD";}| moveErrors {$$="MOVE";}| printErrors {$$="PRINT";}| inputErrors {$$="INPUT";} | TO {$$="TO";} 
-addErrors: ADD value TO | ADD TO NUMBER | ADD TO validIdentifier  | ADD value | ADD TO | ADD
-moveErrors: MOVE value TO | MOVE TO NUMBER | MOVE TO validIdentifier | MOVE value | MOVE TO | MOVE
-printErrors: PRINT printables TO | PRINT TO printables | PRINT printables SEMICOLON | PRINT SEMICOLON printables | PRINT TO | PRINT NUMBER | PRINT
-inputErrors: INPUT multipleIdentifiers TO | INPUT TO multipleIdentifiers | INPUT multipleIdentifiers SEMICOLON | INPUT SEMICOLON multipleIdentifiers | INPUT TO | INPUT NUMBER | INPUT
+
+errorOperation: addErrors {$$="ADD";}
+    | moveErrors {$$="MOVE";}
+    | printErrors {$$="PRINT";}
+    | inputErrors {$$="INPUT";} 
+    | TO {$$="TO";} 
+
+addErrors: ADD value TO 
+    | ADD TO NUMBER 
+    | ADD TO validIdentifier  
+    | ADD value validIdentifier  
+    | ADD value 
+    | ADD TO 
+    | ADD
+
+moveErrors: MOVE value TO 
+    | MOVE TO NUMBER    
+    | MOVE TO validIdentifier 
+    | MOVE value validIdentifier 
+    | MOVE value 
+    | MOVE TO 
+    | MOVE
+
+printErrors: PRINT printables TO 
+    | PRINT TO printables 
+    | PRINT printables SEMICOLON 
+    | PRINT SEMICOLON printables 
+    | PRINT TO 
+    | PRINT NUMBER 
+    | PRINT
+
+inputErrors: INPUT multipleIdentifiers TO 
+    | INPUT TO multipleIdentifiers 
+    | INPUT multipleIdentifiers SEMICOLON 
+    | INPUT SEMICOLON multipleIdentifiers 
+    | INPUT TO 
+    | INPUT NUMBER | INPUT
+
 addition : ADD value TO validIdentifier {updateSymbolValue($4, getSymbolValue($4) + $2);}
+
 move : MOVE value TO validIdentifier {updateSymbolValue($4, $2);}
 input : INPUT multipleIdentifiers
-multipleIdentifiers: multipleIdentifiers SEMICOLON validIdentifier | validIdentifier
-value : validIdentifier { $$ = getSymbolValue($1); } | NUMBER { $$ = $1; }
+multipleIdentifiers: multipleIdentifiers SEMICOLON validIdentifier 
+    | validIdentifier
+value : validIdentifier { $$ = getSymbolValue($1); } 
+    | NUMBER { $$ = $1; }
 print : PRINT printables 
-printables : validIdentifier SEMICOLON printables | WORD SEMICOLON printables | validIdentifier | WORD  
+printables : validIdentifier SEMICOLON printables 
+    | WORD SEMICOLON printables 
+    | validIdentifier 
+    | WORD  
 validIdentifier : IDENTIFIER {
     if(symbolExists($1) == 1) {$$ = $1;} 
     else {char errorMessage [100]; 
@@ -134,9 +175,7 @@ validIdentifier : IDENTIFIER {
 extern FILE *yyin;
 
 int main(int argc, char *argv[]){
-    /* yyin=fopen("BuCol2.txt","r");
-    yyparse();
-    fclose(yyin); */
+
     yyparse();
     if(errCount > 0) {
         printf("%d Errors to fix\n", errCount);
