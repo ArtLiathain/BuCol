@@ -1,10 +1,8 @@
 BEGINING.
 XXX XY-1.
-XXXX Y
 XXXXXX Z
 
-
-BODY.
+body.
 
 
 

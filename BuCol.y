@@ -33,12 +33,12 @@ void addSymbol(char* identifier, int maxLen) {
     if (symbolExists(identifier) == 1){
         char * errorMessage [100];
         int temp = snprintf(errorMessage, 100, "Cannot duplicate variable names %s\n", identifier);
-        yyerror(errorMessage);
+        yyerrorToCall(errorMessage);
         return;
     }
     for (int i = 1; i < strlen(identifier)-1; i++){
         if (identifier[i-1] == 'X' && identifier[i] == 'X'){
-            yyerror("Cannot have contigious X in variable declaration\n");
+            yyerrorToCall("Cannot have contigious X in variable declaration\n");
             return;
         }
     }
@@ -64,7 +64,7 @@ int updateSymbolValue(char* identifier, int value) {
         if (strcmp(symbolTable[i].identifier, identifier) == 0) {
             if(value >= pow(10,symbolTable[i].maxLen)){
                 snprintf(errorMessage,200, "Number too big %d for %s for max length %.2lf\n", value,identifier, pow(10,symbolTable[i].maxLen));
-                yyerror(errorMessage);
+                yyerrorToCall(errorMessage);
                 return -1;
             }
             symbolTable[i].value = value;
@@ -91,12 +91,11 @@ int updateSymbolValue(char* identifier, int value) {
 
 file: BEGINING lineEnd declarations BODY lineEnd maincontent END lineEnd
 lineEnd: NEWLINE 
-    | {yyerror("Line end missing on line above");}
+    | {yyerrorToCall("Line end missing on line above");}
 declarations : declaration declarations 
     | declaration
     |
-    ; 
-
+     
 
 declaration:  VARALLOCATION IDENTIFIER lineEnd {   
     addSymbol($2, $1);
@@ -113,7 +112,7 @@ operations : addition
     | errorOperation {
     char * errorMessage[100];
     int temp = snprintf(errorMessage, 100, "Operation %s not correctly declared", $1) ;
-    yyerror(errorMessage);}
+    yyerrorToCall(errorMessage);}
 
 errorOperation: addErrors {$$="ADD";}
     | moveErrors {$$="MOVE";}
@@ -169,7 +168,7 @@ validIdentifier : IDENTIFIER {
     if(symbolExists($1) == 1) {$$ = $1;} 
     else {char errorMessage [100]; 
     int temp = snprintf(errorMessage, 100, "Identifier %s not declared", $1);
-    yyerror(errorMessage);};}
+    yyerrorToCall(errorMessage);};}
 %%
 
 extern FILE *yyin;
@@ -181,12 +180,18 @@ int main(int argc, char *argv[]){
         printf("%d Errors to fix\n", errCount);
     }
     else {
-        printf("Working code\n");
+        printf("Correctly formed code\n");
     }
     return 0;
 }
 
 void yyerror(const char *s)
+{
+    errCount++;
+    fprintf(stderr, "Unrecognisable Catastrophic Error at line %d: %s\n", yylineno, s);
+}
+
+void yyerrorToCall(const char *s)
 {
     errCount++;
     fprintf(stderr, "Syntax Error at line %d: %s\n", yylineno, s);
