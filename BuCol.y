@@ -56,7 +56,14 @@ int getSymbolValue(char* identifier) {
     }
     return -1; 
 }
-
+int getSymbolCapacity(char* identifier) {
+    for (int i = 0; i < symbolCount; i++) {
+        if (strcmp(symbolTable[i].identifier, identifier) == 0) {
+            return symbolTable[i].maxLen;
+        }
+    }
+    return -1; 
+}
 
 int updateSymbolValue(char* identifier, int value) {
     char errorMessage [200];
@@ -152,11 +159,20 @@ inputErrors: INPUT multipleIdentifiers TO
 
 addition : ADD value TO validIdentifier {updateSymbolValue($4, getSymbolValue($4) + $2);}
 
-move : MOVE value TO validIdentifier {updateSymbolValue($4, $2);}
+move : MOVE IDENTIFIER TO validIdentifier {
+    if(getSymbolCapacity($2) > getSymbolCapacity($4)){
+        char * errorMessage[100];
+        int temp = snprintf(errorMessage, 100, "Operation MOVE has %s with a larger cpaacity than %s trying to move values into it", $2, $4) ;
+        yyerrorToCall(errorMessage);
+    }
+    else {
+        updateSymbolValue($4, $2);
+    }}  
+    | MOVE value TO validIdentifier {updateSymbolValue($4, $2);}
 input : INPUT multipleIdentifiers
 multipleIdentifiers: multipleIdentifiers SEMICOLON validIdentifier 
     | validIdentifier
-value : validIdentifier { $$ = getSymbolValue($1); } 
+value : validIdentifier {$$ = getSymbolValue($1);} 
     | NUMBER { $$ = $1; }
 print : PRINT printables 
 printables : validIdentifier SEMICOLON printables 
