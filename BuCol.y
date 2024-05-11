@@ -28,7 +28,7 @@ int symbolExists(char* identifier) {
     }
     return 0; 
 }
-
+// Add a symbol but omit contigious X and also omit duplicates
 void addSymbol(char* identifier, int maxLen) {
     if (symbolExists(identifier) == 1){
         char * errorMessage [100];
@@ -56,21 +56,22 @@ int getSymbolValue(char* identifier) {
     }
     return -1; 
 }
+
 int getSymbolCapacity(char* identifier) {
     for (int i = 0; i < symbolCount; i++) {
         if (strcmp(symbolTable[i].identifier, identifier) == 0) {
-            return symbolTable[i].maxLen;
+            return pow(10,symbolTable[i].maxLen);
         }
     }
     return -1; 
 }
-
+//Edit the value of a variable does a check to see if the value is larger than the max length
 int updateSymbolValue(char* identifier, int value) {
     char errorMessage [200];
     for (int i = 0; i < symbolCount; i++) {
         if (strcmp(symbolTable[i].identifier, identifier) == 0) {
             if(value >= pow(10,symbolTable[i].maxLen)){
-                snprintf(errorMessage,200, "Number too big %d for %s for max length %.2lf\n", value,identifier, pow(10,symbolTable[i].maxLen));
+                snprintf(errorMessage,200, "Number %d too big for %s for max length %.2lf", value,identifier, pow(10,symbolTable[i].maxLen));
                 yyerrorToCall(errorMessage);
                 return -1;
             }
@@ -97,20 +98,20 @@ int updateSymbolValue(char* identifier, int value) {
 %%
 
 file: BEGINING lineEnd declarations BODY lineEnd maincontent END lineEnd
+//Log errors but continue if . is ommitted
 lineEnd: NEWLINE 
     | {yyerrorToCall("Line end missing on line above");}
 declarations : declaration declarations 
     | declaration
     |
-     
-
+//Add Variable to symbol table
 declaration:  VARALLOCATION IDENTIFIER lineEnd {addSymbol($2, $1);}
     | IDENTIFIER lineEnd {yyerrorToCall("Identifier with no capacity declared");}
-
+//Infinite operations amount
 maincontent : operations lineEnd maincontent 
     | operations lineEnd 
     | 
-
+//All operations with error modes
 operations : addition 
     | move 
     | input 
@@ -120,6 +121,45 @@ operations : addition
     int temp = snprintf(errorMessage, 100, "Operation %s not correctly declared", $1) ;
     yyerrorToCall(errorMessage);}
 
+addition : ADD value TO validIdentifier {updateSymbolValue($4, getSymbolValue($4) + $2);}
+
+move : MOVE validIdentifier TO validIdentifier {
+    //Code specifically ckecking if the the maxlength is larger for on eover the other ignoring the operation then
+    if(getSymbolCapacity($2) > getSymbolCapacity($4)){
+        char errorMessage[200];
+        int temp = snprintf(errorMessage, 199, "Operation MOVE has %s with a larger capacity than %s trying to move values into it", $2, $4) ;
+        yyerrorToCall(errorMessage);
+        //check if the value of the moving cariable is smaller than the capacity of the reciever and if so continue
+        if(getSymbolValue($2) <  getSymbolCapacity($4)){
+            updateSymbolValue($4, getSymbolValue($2));
+        }
+    }
+    else{
+        updateSymbolValue($4, getSymbolValue($2));
+    }
+    }  
+    | MOVE value TO validIdentifier {updateSymbolValue($4, $2);}
+input : INPUT multipleIdentifiers
+//Infinite amount of identifiers for INPUT
+multipleIdentifiers: multipleIdentifiers SEMICOLON validIdentifier 
+    | validIdentifier
+//Return a numeric value
+value : validIdentifier {$$ = getSymbolValue($1);} 
+    | NUMBER { $$ = $1; }
+
+print : PRINT printables 
+//Infinite amount of prints
+printables : validIdentifier SEMICOLON printables 
+    | WORD SEMICOLON printables 
+    | validIdentifier 
+    | WORD  
+// To check identifiers exist
+validIdentifier : IDENTIFIER {
+    if(symbolExists($1) == 1) {$$ = $1;} 
+    else {char errorMessage [100]; 
+    int temp = snprintf(errorMessage, 100, "Identifier %s not declared", $1);
+    yyerrorToCall(errorMessage);};}
+// All below to have better error handling
 errorOperation: addErrors {$$="ADD";}
     | moveErrors {$$="MOVE";}
     | printErrors {$$="PRINT";}
@@ -156,34 +196,6 @@ inputErrors: INPUT multipleIdentifiers TO
     | INPUT SEMICOLON multipleIdentifiers 
     | INPUT TO 
     | INPUT NUMBER | INPUT
-
-addition : ADD value TO validIdentifier {updateSymbolValue($4, getSymbolValue($4) + $2);}
-
-move : MOVE IDENTIFIER TO validIdentifier {
-    if(getSymbolCapacity($2) > getSymbolCapacity($4)){
-        char * errorMessage[100];
-        int temp = snprintf(errorMessage, 100, "Operation MOVE has %s with a larger cpaacity than %s trying to move values into it", $2, $4) ;
-        yyerrorToCall(errorMessage);
-    }
-    else {
-        updateSymbolValue($4, $2);
-    }}  
-    | MOVE value TO validIdentifier {updateSymbolValue($4, $2);}
-input : INPUT multipleIdentifiers
-multipleIdentifiers: multipleIdentifiers SEMICOLON validIdentifier 
-    | validIdentifier
-value : validIdentifier {$$ = getSymbolValue($1);} 
-    | NUMBER { $$ = $1; }
-print : PRINT printables 
-printables : validIdentifier SEMICOLON printables 
-    | WORD SEMICOLON printables 
-    | validIdentifier 
-    | WORD  
-validIdentifier : IDENTIFIER {
-    if(symbolExists($1) == 1) {$$ = $1;} 
-    else {char errorMessage [100]; 
-    int temp = snprintf(errorMessage, 100, "Identifier %s not declared", $1);
-    yyerrorToCall(errorMessage);};}
 %%
 
 extern FILE *yyin;

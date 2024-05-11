@@ -23,5 +23,5 @@ flex -io del.yy.c BuCol.l && bison -d BuCol.y && gcc -o BuCol.out del.yy.c BuCol
 ```
 This will compile and automatically put the file BuCol.txt to be parsed if you want to parse different files 
 ```
-cat $filename | ./BuCol.out
+cat <filename> | ./BuCol.out
 ```

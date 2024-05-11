@@ -1,6 +1,6 @@
 BEGINING.
-XXX XY-1.
-XXXXXX Z
+XX XY-1.
+XXXX Z
 XXX Y.
 
 body.
@@ -8,10 +8,11 @@ body.
 
 
 PRINT "Please enter a number? ".
-INPUT Y;Z;Z.
+INPUT Y;ZZ.
 MOVE 150 TO Z.
-MOVE Z TO Y
+MOVE Z TO Y.
 ADD 900 TO Y.
-PRINT XY-1;" + ";Y;"=";Z.
+MOVE Z TO XY-1.
+PRINT ;" + ";Y;"=";Z.
 
 END.
