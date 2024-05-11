@@ -143,16 +143,16 @@ input : INPUT multipleIdentifiers
 //Infinite amount of identifiers for INPUT
 multipleIdentifiers: multipleIdentifiers SEMICOLON validIdentifier 
     | validIdentifier
-//Return a numeric value
-value : validIdentifier {$$ = getSymbolValue($1);} 
-    | NUMBER { $$ = $1; }
-
+    
 print : PRINT printables 
 //Infinite amount of prints
 printables : validIdentifier SEMICOLON printables 
     | WORD SEMICOLON printables 
     | validIdentifier 
     | WORD  
+//Return a numeric value
+value : validIdentifier {$$ = getSymbolValue($1);} 
+    | NUMBER { $$ = $1; }
 // To check identifiers exist
 validIdentifier : IDENTIFIER {
     if(symbolExists($1) == 1) {$$ = $1;} 
