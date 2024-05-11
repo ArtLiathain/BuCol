@@ -3,7 +3,7 @@
 Bucol is a highly cross functional performant language used from things like banking to launching rockets, turing complete there is nothing it can't do.
 
 ## Features
-A state of the **Art**(Ba dum tss) parser. This parser can not only identify when when your code is not properly formed but count the number of errors in your code and give error messages sepcific to what you did wrong. It can keep a running total of the value of variables and will remind the user if even adding to a variable will make it go over its limit.
+A state of the **Art**(Ba dum tss) parser. This parser can not only identify when when your code is not properly formed but count the number of errors in your code and give error messages specific to what you did wrong. It can keep a running total of the value of variables and will remind the user if even adding to a variable will make it go over its limit. Even if their capacities may not line up the value will be checked to see if it fits.
 An example error
 ```
 Syntax Error at line 4: Line end missing on line above
